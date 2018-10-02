@@ -127,6 +127,44 @@ class BLDFUSettings(object):
         else:
             raise RuntimeError("Unknown architecture")
 
+    def fromhexfile(self, f, arch=None):
+        self.hex_file = f
+        self.ihex.fromfile(f, format='hex')
+
+        # check the 3 possible addresses for CRC matches
+        try:
+            self.probe_settings(BLDFUSettings.bl_sett_51_addr)
+            self.set_arch('NRF51')
+        except Exception as e:
+            try:
+                self.probe_settings(BLDFUSettings.bl_sett_52_addr)
+                self.set_arch('NRF52')
+            except Exception as e:
+                try:
+                    self.probe_settings(BLDFUSettings.bl_sett_52_qfab_addr)
+                    self.set_arch('NRF52QFAB')
+                except Exception as e:
+                    try:
+                        self.probe_settings(BLDFUSettings.bl_sett_52810_addr)
+                        self.set_arch('NRF52810')
+                    except Exception as e:
+                        try:
+                            self.probe_settings(BLDFUSettings.bl_sett_52840_addr)
+                            self.set_arch('NRF52840')
+                        except Exception as e:
+                            raise NordicSemiException("Failed to parse .hex file: {0}".format(e))
+
+        self.bl_sett_addr = self.ihex.minaddr()
+
+    def tohexfile(self, f):
+        self.hex_file = f
+        self.ihex.tofile(f, format='hex')
+
+class BLDFUSettingsV1(BLDFUSettings):
+
+    def __init__(self):
+        super(BLDFUSettingsV1, self).__init__()
+
     def generate(self, arch, app_file, app_ver, bl_ver, bl_sett_ver, custom_bl_sett_addr):
         """
         Populates the settings object based on the given parameters.
@@ -146,10 +184,7 @@ class BLDFUSettings(object):
         if custom_bl_sett_addr is not None:
             self.bl_sett_addr = custom_bl_sett_addr
 
-        if bl_sett_ver == 1:
-            self.setts = BLDFUSettingsStructV1()
-        else:
-            raise NordicSemiException("Unknown bootloader settings version")
+        self.setts = BLDFUSettingsStructV1()
 
         self.bl_sett_ver = bl_sett_ver & 0xffffffff
         self.bl_ver = bl_ver & 0xffffffff
@@ -241,37 +276,6 @@ class BLDFUSettings(object):
         self.app_crc = arr[self.setts.offs_bank0_img_crc] & 0xffffffff
         self.bank0_bank_code = arr[self.setts.offs_bank0_bank_code] & 0xffffffff
 
-
-    def fromhexfile(self, f, arch=None):
-        self.hex_file = f
-        self.ihex.fromfile(f, format='hex')
-
-        # check the 3 possible addresses for CRC matches
-        try:
-            self.probe_settings(BLDFUSettings.bl_sett_51_addr)
-            self.set_arch('NRF51')
-        except Exception as e:
-            try:
-                self.probe_settings(BLDFUSettings.bl_sett_52_addr)
-                self.set_arch('NRF52')
-            except Exception as e:
-                try:
-                    self.probe_settings(BLDFUSettings.bl_sett_52_qfab_addr)
-                    self.set_arch('NRF52QFAB')
-                except Exception as e:
-                    try:
-                        self.probe_settings(BLDFUSettings.bl_sett_52810_addr)
-                        self.set_arch('NRF52810')
-                    except Exception as e:
-                        try:
-                            self.probe_settings(BLDFUSettings.bl_sett_52840_addr)
-                            self.set_arch('NRF52840')
-                        except Exception as e:
-                            raise NordicSemiException("Failed to parse .hex file: {0}".format(e))
-
-        self.bl_sett_addr = self.ihex.minaddr()
-
-
     def __str__(self):
         s = """
 Bootloader DFU Settings:
@@ -290,6 +294,3 @@ Bootloader DFU Settings:
 """.format(self.hex_file, self.arch_str, self.bl_sett_addr, self.crc, self.bl_sett_ver, self.app_ver, self.bl_ver, self.bank_layout, self.bank_current, self.app_sz, self.app_crc, self.bank0_bank_code)
         return s
 
-    def tohexfile(self, f):
-        self.hex_file = f
-        self.ihex.tofile(f, format='hex')

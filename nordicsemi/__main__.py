@@ -46,7 +46,7 @@ import logging
 import subprocess
 sys.path.append(os.getcwd())
 
-from nordicsemi.dfu.bl_dfu_sett import BLDFUSettings
+from nordicsemi.dfu.bl_dfu_sett import BLDFUSettingsV1
 from nordicsemi.dfu.dfu import Dfu
 from nordicsemi.dfu.dfu_transport import DfuEvent, TRANSPORT_LOGGING_LEVEL
 from nordicsemi.dfu.dfu_transport_serial import DfuTransportSerial
@@ -275,7 +275,10 @@ def generate(hex_file,
         click.echo("Error: Bootloader DFU settings version required.")
         return
 
-    sett = BLDFUSettings()
+    if bl_settings_version == 1:
+        sett = BLDFUSettingsV1()
+    else:
+        raise NordicSemiException("Unknown bootloader settings version")
     sett.generate(arch=family, app_file=application, app_ver=application_version_internal, bl_ver=bootloader_version, bl_sett_ver=bl_settings_version, custom_bl_sett_addr=start_address)
     sett.tohexfile(hex_file)
 
