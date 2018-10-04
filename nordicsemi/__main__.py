@@ -301,11 +301,11 @@ def generate(hex_file,
         click.echo("Error: Bootloader DFU settings version required.")
         return
 
-    if sd_boot_validation not in BOOT_VALIDATION_ARGS:
+    if sd_boot_validation and (sd_boot_validation not in BOOT_VALIDATION_ARGS):
         click.echo("Error: --sd_boot_validation called with invalid argument. Must be one of:\n%s" % ("\n".join(BOOT_VALIDATION_ARGS)))
         return
 
-    if app_boot_validation not in BOOT_VALIDATION_ARGS:
+    if app_boot_validation and (app_boot_validation not in BOOT_VALIDATION_ARGS):
         click.echo("Error: --app_boot_validation called with invalid argument. Must be one of:\n%s" % ("\n".join(BOOT_VALIDATION_ARGS)))
         return
 
