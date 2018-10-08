@@ -449,6 +449,9 @@ class BLDFUSettingsV2(BLDFUSettings):
 
         self._add_value_tohex(self.setts.crc, self.crc)
 
+        for offset in range(0x00, 0x15E):
+            self.ihex[self.bl_sett_addr - 0x1000 + offset] = self.ihex[self.bl_sett_addr + offset]
+
     def __str__(self):
         s = """
 Bootloader DFU Settings:
